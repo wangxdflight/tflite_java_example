@@ -25,6 +25,7 @@ import android.graphics.RectF;
 import android.os.Trace;
 import android.util.Log;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -89,16 +90,68 @@ public class TFLiteObjectDetectionAPIModel implements Detector {
   private Interpreter tfLite;
 
   private TFLiteObjectDetectionAPIModel() {}
+  private MappedByteBuffer loadMappedFile() {
+    MappedByteBuffer var9 = null;
+    try {
+      File file = new File("/sdcard/FIRST/tflitemodels/CustomTeamModel.tflite");
 
+      FileInputStream inputStream = new FileInputStream(file);
+      try {
+        FileChannel fileChannel = inputStream.getChannel();
+        var9 = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, file.length());
+      } catch (Throwable var12) {
+        try {
+          inputStream.close();
+        } catch (Throwable var11) {
+          var12.addSuppressed(var11);
+        }
+        throw var12;
+      }
+
+      inputStream.close();
+    } catch (Throwable var13) {
+    }
+
+    return var9;
+
+  }
   /** Memory-map the model file in Assets. */
   private static MappedByteBuffer loadModelFile(AssetManager assets, String modelFilename)
       throws IOException {
+    /*
     AssetFileDescriptor fileDescriptor = assets.openFd(modelFilename);
     FileInputStream inputStream = new FileInputStream(fileDescriptor.getFileDescriptor());
     FileChannel fileChannel = inputStream.getChannel();
     long startOffset = fileDescriptor.getStartOffset();
     long declaredLength = fileDescriptor.getDeclaredLength();
     return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
+
+     */
+    MappedByteBuffer var9 = loadModelFile();
+    /*
+    try {
+      File file = new File("/sdcard/FIRST/tflitemodels/CustomTeamModel.tflite");
+
+      FileInputStream inputStream = new FileInputStream(file);
+      try {
+        FileChannel fileChannel = inputStream.getChannel();
+        var9 = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, file.length());
+      } catch (Throwable var12) {
+        try {
+          inputStream.close();
+        } catch (Throwable var11) {
+          var12.addSuppressed(var11);
+        }
+        throw var12;
+      }
+
+      inputStream.close();
+    } catch (Throwable var13) {
+      throw var13;
+    }
+
+    return var9;
+  }*/
   }
 
   /**

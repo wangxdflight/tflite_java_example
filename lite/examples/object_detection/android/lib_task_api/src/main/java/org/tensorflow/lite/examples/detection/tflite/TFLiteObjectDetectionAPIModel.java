@@ -18,8 +18,12 @@ package org.tensorflow.lite.examples.detection.tflite;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Trace;
+
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 import org.tensorflow.lite.support.common.FileUtil;
@@ -80,9 +84,33 @@ public class TFLiteObjectDetectionAPIModel implements Detector {
       throws IOException {
     return new TFLiteObjectDetectionAPIModel(context, modelFilename);
   }
+  private MappedByteBuffer loadMappedFile() {
+    MappedByteBuffer var9 = null;
+    try {
+      File file = new File("/sdcard/FIRST/tflitemodels/CustomTeamModel.tflite");
 
+      FileInputStream inputStream = new FileInputStream(file);
+      try {
+        FileChannel fileChannel = inputStream.getChannel();
+        var9 = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, file.length());
+      } catch (Throwable var12) {
+        try {
+          inputStream.close();
+        } catch (Throwable var11) {
+          var12.addSuppressed(var11);
+        }
+        throw var12;
+      }
+
+      inputStream.close();
+    } catch (Throwable var13) {
+    }
+
+    return var9;
+
+  }
   private TFLiteObjectDetectionAPIModel(Context context, String modelFilename) throws IOException {
-    modelBuffer = FileUtil.loadMappedFile(context, modelFilename);
+    modelBuffer = loadMappedFile(); //FileUtil.loadMappedFile(context, modelFilename);
     optionsBuilder = ObjectDetectorOptions.builder().setMaxResults(NUM_DETECTIONS);
     objectDetector = ObjectDetector.createFromBufferAndOptions(modelBuffer, optionsBuilder.build());
   }
