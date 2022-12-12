@@ -58,7 +58,7 @@ public class TFLiteObjectDetectionAPIModel implements Detector {
   private static final String TAG = "TFLiteObjectDetectionAPIModelWithInterpreter";
 
   // Only return this many results.
-  private static final int NUM_DETECTIONS = 10;
+  private static final int NUM_DETECTIONS = 3;
   // Float model
   private static final float IMAGE_MEAN = 127.5f;
   private static final float IMAGE_STD = 127.5f;
@@ -90,7 +90,7 @@ public class TFLiteObjectDetectionAPIModel implements Detector {
   private Interpreter tfLite;
 
   private TFLiteObjectDetectionAPIModel() {}
-  private MappedByteBuffer loadMappedFile() {
+  private static MappedByteBuffer loadMappedFile() {
     MappedByteBuffer var9 = null;
     try {
       File file = new File("/sdcard/FIRST/tflitemodels/CustomTeamModel.tflite");
@@ -127,7 +127,9 @@ public class TFLiteObjectDetectionAPIModel implements Detector {
     return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
 
      */
-    MappedByteBuffer var9 = loadModelFile();
+    MappedByteBuffer var9 = loadMappedFile();
+    return var9;
+
     /*
     try {
       File file = new File("/sdcard/FIRST/tflitemodels/CustomTeamModel.tflite");
@@ -171,7 +173,8 @@ public class TFLiteObjectDetectionAPIModel implements Detector {
       throws IOException {
     final TFLiteObjectDetectionAPIModel d = new TFLiteObjectDetectionAPIModel();
 
-    MappedByteBuffer modelFile = loadModelFile(context.getAssets(), modelFilename);
+    MappedByteBuffer modelFile = loadMappedFile();//loadModelFile(context.getAssets(), modelFilename);
+    assert(modelFile != null);
     MetadataExtractor metadata = new MetadataExtractor(modelFile);
     try (BufferedReader br =
         new BufferedReader(
@@ -213,6 +216,7 @@ public class TFLiteObjectDetectionAPIModel implements Detector {
     d.outputClasses = new float[1][NUM_DETECTIONS];
     d.outputScores = new float[1][NUM_DETECTIONS];
     d.numDetections = new float[1];
+
     return d;
   }
 
@@ -253,10 +257,17 @@ public class TFLiteObjectDetectionAPIModel implements Detector {
 
     Object[] inputArray = {imgData};
     Map<Integer, Object> outputMap = new HashMap<>();
+    /*
     outputMap.put(0, outputLocations);
     outputMap.put(1, outputClasses);
     outputMap.put(2, outputScores);
-    outputMap.put(3, numDetections);
+    outputMap.put(3, numDetections); */
+
+    outputMap.put(0, outputScores);
+    outputMap.put(1, outputLocations);
+    outputMap.put(2, numDetections);
+    outputMap.put(3, outputClasses);
+
     Trace.endSection();
 
     // Run the inference call.

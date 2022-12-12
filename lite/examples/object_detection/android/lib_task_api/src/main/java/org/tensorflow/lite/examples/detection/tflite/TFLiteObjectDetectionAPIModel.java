@@ -53,7 +53,7 @@ public class TFLiteObjectDetectionAPIModel implements Detector {
   private static final String TAG = "TFLiteObjectDetectionAPIModelWithTaskApi";
 
   /** Only return this many results. */
-  private static final int NUM_DETECTIONS = 10;
+  private static final int NUM_DETECTIONS = 2;
 
   private final MappedByteBuffer modelBuffer;
 
@@ -111,8 +111,10 @@ public class TFLiteObjectDetectionAPIModel implements Detector {
   }
   private TFLiteObjectDetectionAPIModel(Context context, String modelFilename) throws IOException {
     modelBuffer = loadMappedFile(); //FileUtil.loadMappedFile(context, modelFilename);
+    assert(modelBuffer != null);
     optionsBuilder = ObjectDetectorOptions.builder().setMaxResults(NUM_DETECTIONS);
-    objectDetector = ObjectDetector.createFromBufferAndOptions(modelBuffer, optionsBuilder.build());
+    //objectDetector = ObjectDetector.createFromBufferAndOptions(modelBuffer, optionsBuilder.build());
+    objectDetector = ObjectDetector.createFromFileAndOptions(new File("/sdcard/FIRST/tflitemodels/CustomTeamModel.tflite"), optionsBuilder.build());
   }
 
   @Override
