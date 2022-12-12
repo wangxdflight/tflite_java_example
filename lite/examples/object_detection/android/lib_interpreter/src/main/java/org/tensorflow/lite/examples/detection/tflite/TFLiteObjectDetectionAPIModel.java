@@ -41,6 +41,7 @@ import java.util.Map;
 import org.tensorflow.lite.Interpreter;
 import org.tensorflow.lite.support.metadata.MetadataExtractor;
 
+
 /**
  * Wrapper for frozen detection models trained using the Tensorflow Object Detection API: -
  * https://github.com/tensorflow/models/tree/master/research/object_detection where you can find the
@@ -58,7 +59,7 @@ public class TFLiteObjectDetectionAPIModel implements Detector {
   private static final String TAG = "TFLiteObjectDetectionAPIModelWithInterpreter";
 
   // Only return this many results.
-  private static final int NUM_DETECTIONS = 3;
+  private static final int NUM_DETECTIONS = 10;
   // Float model
   private static final float IMAGE_MEAN = 127.5f;
   private static final float IMAGE_STD = 127.5f;
@@ -90,31 +91,7 @@ public class TFLiteObjectDetectionAPIModel implements Detector {
   private Interpreter tfLite;
 
   private TFLiteObjectDetectionAPIModel() {}
-  private static MappedByteBuffer loadMappedFile() {
-    MappedByteBuffer var9 = null;
-    try {
-      File file = new File("/sdcard/FIRST/tflitemodels/CustomTeamModel.tflite");
 
-      FileInputStream inputStream = new FileInputStream(file);
-      try {
-        FileChannel fileChannel = inputStream.getChannel();
-        var9 = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, file.length());
-      } catch (Throwable var12) {
-        try {
-          inputStream.close();
-        } catch (Throwable var11) {
-          var12.addSuppressed(var11);
-        }
-        throw var12;
-      }
-
-      inputStream.close();
-    } catch (Throwable var13) {
-    }
-
-    return var9;
-
-  }
   /** Memory-map the model file in Assets. */
   private static MappedByteBuffer loadModelFile(AssetManager assets, String modelFilename)
       throws IOException {
@@ -127,10 +104,8 @@ public class TFLiteObjectDetectionAPIModel implements Detector {
     return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
 
      */
-    MappedByteBuffer var9 = loadMappedFile();
-    return var9;
+    MappedByteBuffer var9 = null;
 
-    /*
     try {
       File file = new File("/sdcard/FIRST/tflitemodels/CustomTeamModel.tflite");
 
@@ -153,8 +128,8 @@ public class TFLiteObjectDetectionAPIModel implements Detector {
     }
 
     return var9;
-  }*/
   }
+
 
   /**
    * Initializes a native TensorFlow session for classifying images.
@@ -173,13 +148,17 @@ public class TFLiteObjectDetectionAPIModel implements Detector {
       throws IOException {
     final TFLiteObjectDetectionAPIModel d = new TFLiteObjectDetectionAPIModel();
 
-    MappedByteBuffer modelFile = loadMappedFile();//loadModelFile(context.getAssets(), modelFilename);
+    MappedByteBuffer modelFile = loadModelFile(context.getAssets(), modelFilename);
     assert(modelFile != null);
+    Log.w(TAG, "labelFilename " + labelFilename);
+    Log.w(TAG, "modelFilename " + modelFilename);
+    Log.w(TAG, "modelFile " + modelFile);
+
     MetadataExtractor metadata = new MetadataExtractor(modelFile);
     try (BufferedReader br =
         new BufferedReader(
             new InputStreamReader(
-                metadata.getAssociatedFile(labelFilename), Charset.defaultCharset()))) {
+                metadata.getAssociatedFile("tflite_label_map.txt"), Charset.defaultCharset()))) {
       String line;
       while ((line = br.readLine()) != null) {
         Log.w(TAG, line);
@@ -208,6 +187,9 @@ public class TFLiteObjectDetectionAPIModel implements Detector {
     } else {
       numBytesPerChannel = 4; // Floating point
     }
+    Log.w(TAG, "inputSize " + d.inputSize + " size " + 1 * d.inputSize * d.inputSize * 3 * numBytesPerChannel);
+    Log.w(TAG, "isQuantized " + isQuantized);
+
     d.imgData = ByteBuffer.allocateDirect(1 * d.inputSize * d.inputSize * 3 * numBytesPerChannel);
     d.imgData.order(ByteOrder.nativeOrder());
     d.intValues = new int[d.inputSize * d.inputSize];
@@ -257,17 +239,19 @@ public class TFLiteObjectDetectionAPIModel implements Detector {
 
     Object[] inputArray = {imgData};
     Map<Integer, Object> outputMap = new HashMap<>();
-    /*
-    outputMap.put(0, outputLocations);
-    outputMap.put(1, outputClasses);
-    outputMap.put(2, outputScores);
-    outputMap.put(3, numDetections); */
 
-    outputMap.put(0, outputScores);
-    outputMap.put(1, outputLocations);
-    outputMap.put(2, numDetections);
-    outputMap.put(3, outputClasses);
-
+    if (false) {
+      outputMap.put(0, outputLocations);
+      outputMap.put(1, outputClasses);
+      outputMap.put(2, outputScores);
+      outputMap.put(3, numDetections);
+    }
+    else {
+      outputMap.put(0, outputScores);
+      outputMap.put(1, outputLocations);
+      outputMap.put(2, numDetections);
+      outputMap.put(3, outputClasses);
+    }
     Trace.endSection();
 
     // Run the inference call.

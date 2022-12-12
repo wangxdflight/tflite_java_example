@@ -53,7 +53,7 @@ public class TFLiteObjectDetectionAPIModel implements Detector {
   private static final String TAG = "TFLiteObjectDetectionAPIModelWithTaskApi";
 
   /** Only return this many results. */
-  private static final int NUM_DETECTIONS = 2;
+  private static final int NUM_DETECTIONS = 10;
 
   private final MappedByteBuffer modelBuffer;
 
